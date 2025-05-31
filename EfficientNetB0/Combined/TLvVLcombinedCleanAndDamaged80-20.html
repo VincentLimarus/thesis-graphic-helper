@@ -31,9 +31,25 @@
       .legend {
         font-size: 14px;
       }
-      .dot {
-        stroke-width: 2;
-        stroke: #fff;
+      .training-dot {
+        fill: #ff6b6b;
+        stroke: white;
+        stroke-width: 1.5;
+      }
+      .validation-dot {
+        fill: #4ecdc4;
+        stroke: white;
+        stroke-width: 1.5;
+      }
+      .tooltip {
+        position: absolute;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        border-radius: 4px;
+        pointer-events: none;
+        font-size: 12px;
+        z-index: 100;
       }
     </style>
   </head>
@@ -148,6 +164,13 @@
         { epoch: 100, training_loss: 1.8922, validation_loss: 2.844 },
       ];
 
+      // Create tooltip div
+      const tooltip = d3
+        .select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+
       // Set up the SVG dimensions and margins
       const margin = { top: 50, right: 80, bottom: 70, left: 80 };
       const width = 900 - margin.left - margin.right;
@@ -198,6 +221,56 @@
         .datum(data)
         .attr("class", "validation-line")
         .attr("d", validationLine);
+
+      // Add training data points
+      svg
+        .selectAll(".training-dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "training-dot")
+        .attr("cx", (d) => xScale(d.epoch))
+        .attr("cy", (d) => yScale(d.training_loss))
+        .attr("r", 5)
+        .on("mouseover", function (event, d) {
+          tooltip.transition().duration(200).style("opacity", 0.9);
+          tooltip
+            .html(
+              `Epoch: ${d.epoch}<br>Training Loss: ${d.training_loss.toFixed(
+                4
+              )}`
+            )
+            .style("left", event.pageX + 10 + "px")
+            .style("top", event.pageY - 28 + "px");
+        })
+        .on("mouseout", function () {
+          tooltip.transition().duration(500).style("opacity", 0);
+        });
+
+      // Add validation data points
+      svg
+        .selectAll(".validation-dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "validation-dot")
+        .attr("cx", (d) => xScale(d.epoch))
+        .attr("cy", (d) => yScale(d.validation_loss))
+        .attr("r", 5)
+        .on("mouseover", function (event, d) {
+          tooltip.transition().duration(200).style("opacity", 0.9);
+          tooltip
+            .html(
+              `Epoch: ${
+                d.epoch
+              }<br>Validation Loss: ${d.validation_loss.toFixed(4)}`
+            )
+            .style("left", event.pageX + 10 + "px")
+            .style("top", event.pageY - 28 + "px");
+        })
+        .on("mouseout", function () {
+          tooltip.transition().duration(500).style("opacity", 0);
+        });
 
       // Add X axis
       svg
