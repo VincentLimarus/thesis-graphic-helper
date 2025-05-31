@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Training vs Validation Loss</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      .chart-container {
+        width: 900px;
+        height: 500px;
+        margin: 30px auto;
+        font-family: Arial, sans-serif;
+      }
+      .title {
+        text-align: center;
+        font-size: 20px;
+        margin-bottom: 10px;
+      }
+      .axis-label {
+        font-size: 14px;
+      }
+      .training-line {
+        stroke: #ff6b6b;
+        stroke-width: 3;
+        fill: none;
+      }
+      .validation-line {
+        stroke: #4ecdc4;
+        stroke-width: 3;
+        fill: none;
+      }
+      .legend {
+        font-size: 14px;
+      }
+      .dot {
+        stroke-width: 2;
+        stroke: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chart-container">
+      <div class="title">Training Loss vs Validation Loss</div>
+      <svg width="100%" height="100%"></svg>
+    </div>
+
+    <script>
+      // Data extracted directly from your training logs
+      const data = [
+        { epoch: 1, training_loss: 7.7017, validation_loss: 7.6662 },
+        { epoch: 2, training_loss: 7.6166, validation_loss: 7.608 },
+        { epoch: 3, training_loss: 7.5167, validation_loss: 7.5435 },
+        { epoch: 4, training_loss: 7.3787, validation_loss: 7.4655 },
+        { epoch: 5, training_loss: 7.1985, validation_loss: 7.3656 },
+        { epoch: 6, training_loss: 6.9856, validation_loss: 7.2363 },
+        { epoch: 7, training_loss: 6.7477, validation_loss: 7.0928 },
+        { epoch: 8, training_loss: 6.4977, validation_loss: 6.904 },
+        { epoch: 9, training_loss: 6.2723, validation_loss: 6.6966 },
+        { epoch: 10, training_loss: 6.0426, validation_loss: 6.4767 },
+        { epoch: 11, training_loss: 5.8365, validation_loss: 6.2815 },
+        { epoch: 12, training_loss: 5.6276, validation_loss: 6.073 },
+        { epoch: 13, training_loss: 5.4209, validation_loss: 5.8708 },
+        { epoch: 14, training_loss: 5.249, validation_loss: 5.6957 },
+        { epoch: 15, training_loss: 5.0542, validation_loss: 5.5149 },
+        { epoch: 16, training_loss: 4.8908, validation_loss: 5.3643 },
+        { epoch: 17, training_loss: 4.7605, validation_loss: 5.2115 },
+        { epoch: 18, training_loss: 4.6137, validation_loss: 5.0982 },
+        { epoch: 19, training_loss: 4.5071, validation_loss: 4.9765 },
+        { epoch: 20, training_loss: 4.3887, validation_loss: 4.8703 },
+        { epoch: 21, training_loss: 4.2486, validation_loss: 4.7586 },
+        { epoch: 22, training_loss: 4.1804, validation_loss: 4.6681 },
+        { epoch: 23, training_loss: 4.1013, validation_loss: 4.5874 },
+        { epoch: 24, training_loss: 4.0094, validation_loss: 4.5034 },
+        { epoch: 25, training_loss: 3.9326, validation_loss: 4.4348 },
+        { epoch: 26, training_loss: 3.8349, validation_loss: 4.3862 },
+        { epoch: 27, training_loss: 3.7831, validation_loss: 4.3141 },
+        { epoch: 28, training_loss: 3.714, validation_loss: 4.2626 },
+        { epoch: 29, training_loss: 3.6506, validation_loss: 4.215 },
+        { epoch: 30, training_loss: 3.593, validation_loss: 4.1787 },
+        { epoch: 31, training_loss: 3.5415, validation_loss: 4.1245 },
+        { epoch: 32, training_loss: 3.4787, validation_loss: 4.0804 },
+        { epoch: 33, training_loss: 3.4166, validation_loss: 4.0342 },
+        { epoch: 34, training_loss: 3.3647, validation_loss: 3.9864 },
+        { epoch: 35, training_loss: 3.3228, validation_loss: 3.9599 },
+        { epoch: 36, training_loss: 3.2822, validation_loss: 3.9151 },
+        { epoch: 37, training_loss: 3.2489, validation_loss: 3.8938 },
+        { epoch: 38, training_loss: 3.2073, validation_loss: 3.8553 },
+        { epoch: 39, training_loss: 3.1574, validation_loss: 3.8308 },
+        { epoch: 40, training_loss: 3.1189, validation_loss: 3.7922 },
+        { epoch: 41, training_loss: 3.0832, validation_loss: 3.7642 },
+        { epoch: 42, training_loss: 3.0362, validation_loss: 3.7341 },
+        { epoch: 43, training_loss: 2.997, validation_loss: 3.7054 },
+        { epoch: 44, training_loss: 2.9778, validation_loss: 3.6854 },
+        { epoch: 45, training_loss: 2.9375, validation_loss: 3.65 },
+        { epoch: 46, training_loss: 2.91, validation_loss: 3.6331 },
+        { epoch: 47, training_loss: 2.897, validation_loss: 3.6232 },
+        { epoch: 48, training_loss: 2.8482, validation_loss: 3.586 },
+        { epoch: 49, training_loss: 2.831, validation_loss: 3.5686 },
+        { epoch: 50, training_loss: 2.801, validation_loss: 3.5537 },
+        { epoch: 51, training_loss: 2.7613, validation_loss: 3.5285 },
+        { epoch: 52, training_loss: 2.7259, validation_loss: 3.5026 },
+        { epoch: 53, training_loss: 2.7022, validation_loss: 3.4773 },
+        { epoch: 54, training_loss: 2.6838, validation_loss: 3.4554 },
+        { epoch: 55, training_loss: 2.6584, validation_loss: 3.4528 },
+        { epoch: 56, training_loss: 2.6428, validation_loss: 3.4303 },
+        { epoch: 57, training_loss: 2.6079, validation_loss: 3.4069 },
+        { epoch: 58, training_loss: 2.5761, validation_loss: 3.3936 },
+        { epoch: 59, training_loss: 2.5568, validation_loss: 3.3819 },
+        { epoch: 60, training_loss: 2.5598, validation_loss: 3.3589 },
+        { epoch: 61, training_loss: 2.5154, validation_loss: 3.3493 },
+        { epoch: 62, training_loss: 2.4979, validation_loss: 3.3368 },
+        { epoch: 63, training_loss: 2.4762, validation_loss: 3.3253 },
+        { epoch: 64, training_loss: 2.4423, validation_loss: 3.3132 },
+        { epoch: 65, training_loss: 2.4377, validation_loss: 3.2847 },
+        { epoch: 66, training_loss: 2.4249, validation_loss: 3.2702 },
+        { epoch: 67, training_loss: 2.3904, validation_loss: 3.2463 },
+        { epoch: 68, training_loss: 2.3871, validation_loss: 3.2361 },
+        { epoch: 69, training_loss: 2.3545, validation_loss: 3.2248 },
+        { epoch: 70, training_loss: 2.3545, validation_loss: 3.2092 },
+        { epoch: 71, training_loss: 2.329, validation_loss: 3.1834 },
+        { epoch: 72, training_loss: 2.3175, validation_loss: 3.1817 },
+        { epoch: 73, training_loss: 2.2991, validation_loss: 3.1668 },
+        { epoch: 74, training_loss: 2.2798, validation_loss: 3.1502 },
+        { epoch: 75, training_loss: 2.2604, validation_loss: 3.1358 },
+        { epoch: 76, training_loss: 2.2388, validation_loss: 3.1178 },
+        { epoch: 77, training_loss: 2.221, validation_loss: 3.1107 },
+        { epoch: 78, training_loss: 2.2083, validation_loss: 3.1071 },
+        { epoch: 79, training_loss: 2.191, validation_loss: 3.0723 },
+        { epoch: 80, training_loss: 2.1814, validation_loss: 3.0594 },
+        { epoch: 81, training_loss: 2.1582, validation_loss: 3.0551 },
+        { epoch: 82, training_loss: 2.1415, validation_loss: 3.0531 },
+        { epoch: 83, training_loss: 2.1332, validation_loss: 3.0331 },
+        { epoch: 84, training_loss: 2.1234, validation_loss: 3.0252 },
+        { epoch: 85, training_loss: 2.0949, validation_loss: 3.017 },
+        { epoch: 86, training_loss: 2.0849, validation_loss: 3.0244 },
+        { epoch: 87, training_loss: 2.0512, validation_loss: 3.0032 },
+        { epoch: 88, training_loss: 2.0518, validation_loss: 2.9859 },
+        { epoch: 89, training_loss: 2.0392, validation_loss: 2.9754 },
+        { epoch: 90, training_loss: 2.0309, validation_loss: 2.9653 },
+        { epoch: 91, training_loss: 2.0084, validation_loss: 2.9543 },
+        { epoch: 92, training_loss: 2.0028, validation_loss: 2.948 },
+        { epoch: 93, training_loss: 1.9801, validation_loss: 2.9266 },
+        { epoch: 94, training_loss: 1.9751, validation_loss: 2.9181 },
+        { epoch: 95, training_loss: 1.9662, validation_loss: 2.9161 },
+        { epoch: 96, training_loss: 1.9523, validation_loss: 2.9025 },
+        { epoch: 97, training_loss: 1.9324, validation_loss: 2.8911 },
+        { epoch: 98, training_loss: 1.9234, validation_loss: 2.8918 },
+        { epoch: 99, training_loss: 1.8957, validation_loss: 2.865 },
+        { epoch: 100, training_loss: 1.8922, validation_loss: 2.844 },
+      ];
+
+      // Set up the SVG dimensions and margins
+      const margin = { top: 50, right: 80, bottom: 70, left: 80 };
+      const width = 900 - margin.left - margin.right;
+      const height = 500 - margin.top - margin.bottom;
+
+      // Create the SVG container
+      const svg = d3
+        .select("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      // Find max loss for the y-axis domain
+      const maxLoss = d3.max(data, (d) =>
+        Math.max(d.training_loss, d.validation_loss)
+      );
+
+      // Create scales
+      const xScale = d3
+        .scaleLinear()
+        .domain([1, d3.max(data, (d) => d.epoch)])
+        .range([0, width]);
+
+      const yScale = d3.scaleLinear().domain([0, maxLoss]).range([height, 0]);
+
+      // Create line generators
+      const trainingLine = d3
+        .line()
+        .x((d) => xScale(d.epoch))
+        .y((d) => yScale(d.training_loss));
+
+      const validationLine = d3
+        .line()
+        .x((d) => xScale(d.epoch))
+        .y((d) => yScale(d.validation_loss));
+
+      // Add the training loss line
+      svg
+        .append("path")
+        .datum(data)
+        .attr("class", "training-line")
+        .attr("d", trainingLine);
+
+      // Add the validation loss line
+      svg
+        .append("path")
+        .datum(data)
+        .attr("class", "validation-line")
+        .attr("d", validationLine);
+
+      // Add X axis
+      svg
+        .append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale).ticks(10))
+        .append("text")
+        .attr("class", "axis-label")
+        .attr("x", width / 2)
+        .attr("y", 40)
+        .attr("fill", "#000")
+        .text("Epoch");
+
+      // Add Y axis
+      svg
+        .append("g")
+        .call(d3.axisLeft(yScale))
+        .append("text")
+        .attr("class", "axis-label")
+        .attr("transform", "rotate(-90)")
+        .attr("y", -50)
+        .attr("x", -height / 2)
+        .attr("fill", "#000")
+        .text("Loss");
+
+      // Add legend
+      const legend = svg
+        .append("g")
+        .attr("transform", `translate(${width - 150}, 50)`);
+
+      legend
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", 20)
+        .attr("height", 20)
+        .attr("fill", "#ff6b6b");
+
+      legend
+        .append("text")
+        .attr("x", 30)
+        .attr("y", 15)
+        .text("Training Loss")
+        .attr("class", "legend");
+
+      legend
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", 30)
+        .attr("width", 20)
+        .attr("height", 20)
+        .attr("fill", "#4ecdc4");
+
+      legend
+        .append("text")
+        .attr("x", 30)
+        .attr("y", 45)
+        .text("Validation Loss")
+        .attr("class", "legend");
+    </script>
+  </body>
+</html>

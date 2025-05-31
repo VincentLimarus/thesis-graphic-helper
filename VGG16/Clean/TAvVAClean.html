@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Training vs Validation Accuracy (Synced with Logs)</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      .chart-container {
+        width: 900px;
+        height: 500px;
+        margin: 30px auto;
+        font-family: Arial, sans-serif;
+      }
+      .title {
+        text-align: center;
+        font-size: 20px;
+        margin-bottom: 10px;
+      }
+      .axis-label {
+        font-size: 14px;
+      }
+      .training-line {
+        stroke: #9b59b6;
+        stroke-width: 3;
+        fill: none;
+      }
+      .validation-line {
+        stroke: #e67e22;
+        stroke-width: 3;
+        fill: none;
+      }
+      .legend {
+        font-size: 14px;
+      }
+      .dot {
+        stroke-width: 2;
+        stroke: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chart-container">
+      <div class="title">
+        Training Accuracy vs Validation Accuracy (Synced with Logs)
+      </div>
+      <svg width="100%" height="100%"></svg>
+    </div>
+
+    <script>
+      // Data extracted directly from your training logs (accuracy * 100 to get percentage)
+      const data = [
+        { epoch: 1, training_acc: 0.69, validation_acc: 1.75 },
+        { epoch: 2, training_acc: 3.85, validation_acc: 10.7 },
+        { epoch: 3, training_acc: 11.13, validation_acc: 21.79 },
+        { epoch: 4, training_acc: 22.98, validation_acc: 28.99 },
+        { epoch: 5, training_acc: 34.3, validation_acc: 42.61 },
+        { epoch: 6, training_acc: 46.1, validation_acc: 46.5 },
+        { epoch: 7, training_acc: 55.24, validation_acc: 58.56 },
+        { epoch: 8, training_acc: 62.96, validation_acc: 62.45 },
+        { epoch: 9, training_acc: 69.5, validation_acc: 56.61 },
+        { epoch: 10, training_acc: 74.2, validation_acc: 59.92 },
+        { epoch: 11, training_acc: 77.24, validation_acc: 67.12 },
+        { epoch: 12, training_acc: 81.34, validation_acc: 66.34 },
+        { epoch: 13, training_acc: 83.9, validation_acc: 68.87 },
+        { epoch: 14, training_acc: 85.97, validation_acc: 68.48 },
+        { epoch: 15, training_acc: 88.12, validation_acc: 66.73 },
+        { epoch: 16, training_acc: 89.02, validation_acc: 70.23 },
+        { epoch: 17, training_acc: 90.26, validation_acc: 71.21 },
+        { epoch: 18, training_acc: 90.9, validation_acc: 69.84 },
+        { epoch: 19, training_acc: 92.29, validation_acc: 72.37 },
+        { epoch: 20, training_acc: 93.29, validation_acc: 76.07 },
+        { epoch: 21, training_acc: 93.84, validation_acc: 71.21 },
+        { epoch: 22, training_acc: 94.4, validation_acc: 77.43 },
+        { epoch: 23, training_acc: 94.24, validation_acc: 74.51 },
+        { epoch: 24, training_acc: 94.97, validation_acc: 72.57 },
+        { epoch: 25, training_acc: 95.46, validation_acc: 70.04 },
+        { epoch: 26, training_acc: 97.52, validation_acc: 77.82 },
+        { epoch: 27, training_acc: 97.78, validation_acc: 78.99 },
+        { epoch: 28, training_acc: 97.89, validation_acc: 74.12 },
+        { epoch: 29, training_acc: 97.76, validation_acc: 73.54 },
+        { epoch: 30, training_acc: 98.02, validation_acc: 80.54 },
+        { epoch: 31, training_acc: 97.95, validation_acc: 76.65 },
+        { epoch: 32, training_acc: 98.26, validation_acc: 70.23 },
+        { epoch: 33, training_acc: 98.07, validation_acc: 78.6 },
+        { epoch: 34, training_acc: 98.92, validation_acc: 78.6 },
+        { epoch: 35, training_acc: 98.88, validation_acc: 74.9 },
+        { epoch: 36, training_acc: 99.01, validation_acc: 77.82 },
+        { epoch: 37, training_acc: 99.09, validation_acc: 80.93 },
+        { epoch: 38, training_acc: 99.22, validation_acc: 80.54 },
+        { epoch: 39, training_acc: 99.44, validation_acc: 77.63 },
+        { epoch: 40, training_acc: 99.39, validation_acc: 78.4 },
+        { epoch: 41, training_acc: 99.42, validation_acc: 80.93 },
+        { epoch: 42, training_acc: 99.47, validation_acc: 80.54 },
+        { epoch: 43, training_acc: 99.51, validation_acc: 80.74 },
+        { epoch: 44, training_acc: 99.56, validation_acc: 80.74 },
+        { epoch: 45, training_acc: 99.51, validation_acc: 80.16 },
+        { epoch: 46, training_acc: 99.32, validation_acc: 81.32 },
+        { epoch: 47, training_acc: 99.51, validation_acc: 79.96 },
+        { epoch: 48, training_acc: 99.59, validation_acc: 80.35 },
+        { epoch: 49, training_acc: 99.51, validation_acc: 81.52 },
+        { epoch: 50, training_acc: 99.48, validation_acc: 80.93 },
+        { epoch: 51, training_acc: 99.46, validation_acc: 81.52 },
+        { epoch: 52, training_acc: 99.48, validation_acc: 81.52 },
+        { epoch: 53, training_acc: 99.68, validation_acc: 80.74 },
+        { epoch: 54, training_acc: 99.64, validation_acc: 82.3 },
+        { epoch: 55, training_acc: 99.56, validation_acc: 81.32 },
+        { epoch: 56, training_acc: 99.42, validation_acc: 80.93 },
+        { epoch: 57, training_acc: 99.62, validation_acc: 81.91 },
+        { epoch: 58, training_acc: 99.68, validation_acc: 81.91 },
+        { epoch: 59, training_acc: 99.49, validation_acc: 81.32 },
+        { epoch: 60, training_acc: 99.64, validation_acc: 81.13 },
+        { epoch: 61, training_acc: 99.64, validation_acc: 81.71 },
+        { epoch: 62, training_acc: 99.63, validation_acc: 81.52 },
+        { epoch: 63, training_acc: 99.7, validation_acc: 80.74 },
+        { epoch: 64, training_acc: 99.59, validation_acc: 80.54 },
+      ];
+
+      // Set up the SVG dimensions and margins
+      const margin = { top: 50, right: 80, bottom: 70, left: 80 };
+      const width = 900 - margin.left - margin.right;
+      const height = 500 - margin.top - margin.bottom;
+
+      // Create the SVG container
+      const svg = d3
+        .select("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      // Create scales
+      const xScale = d3
+        .scaleLinear()
+        .domain([1, d3.max(data, (d) => d.epoch)])
+        .range([0, width]);
+
+      const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+
+      // Create line generators
+      const trainingLine = d3
+        .line()
+        .x((d) => xScale(d.epoch))
+        .y((d) => yScale(d.training_acc));
+
+      const validationLine = d3
+        .line()
+        .x((d) => xScale(d.epoch))
+        .y((d) => yScale(d.validation_acc));
+
+      // Add the training accuracy line
+      svg
+        .append("path")
+        .datum(data)
+        .attr("class", "training-line")
+        .attr("d", trainingLine);
+
+      // Add the validation accuracy line
+      svg
+        .append("path")
+        .datum(data)
+        .attr("class", "validation-line")
+        .attr("d", validationLine);
+
+      // Add X axis
+      svg
+        .append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale).ticks(10))
+        .append("text")
+        .attr("class", "axis-label")
+        .attr("x", width / 2)
+        .attr("y", 40)
+        .attr("fill", "#000")
+        .text("Epoch");
+
+      // Add Y axis
+      svg
+        .append("g")
+        .call(d3.axisLeft(yScale))
+        .append("text")
+        .attr("class", "axis-label")
+        .attr("transform", "rotate(-90)")
+        .attr("y", -50)
+        .attr("x", -height / 2)
+        .attr("fill", "#000")
+        .text("Accuracy (%)");
+
+      // Add legend
+      const legend = svg
+        .append("g")
+        .attr("transform", `translate(${width - 150}, 130)`);
+
+      legend
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", 20)
+        .attr("height", 20)
+        .attr("fill", "#9b59b6");
+
+      legend
+        .append("text")
+        .attr("x", 30)
+        .attr("y", 15)
+        .text("Training Accuracy")
+        .attr("class", "legend");
+
+      legend
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", 30)
+        .attr("width", 20)
+        .attr("height", 20)
+        .attr("fill", "#e67e22");
+
+      legend
+        .append("text")
+        .attr("x", 30)
+        .attr("y", 45)
+        .text("Validation Accuracy")
+        .attr("class", "legend");
+    </script>
+  </body>
+</html>
