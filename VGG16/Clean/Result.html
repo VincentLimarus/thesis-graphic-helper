@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Combined Training Metrics</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f8f9fa;
+      }
+      .dashboard-container {
+        width: 1000px;
+        margin: 20px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .main-title {
+        text-align: center;
+        font-size: 28px;
+        margin-bottom: 30px;
+        color: #2c3e50;
+        font-weight: bold;
+      }
+      .chart-container {
+        width: 100%;
+        height: 600px;
+        margin-bottom: 30px;
+      }
+      .axis-label {
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .training-loss-line {
+        stroke: #e74c3c;
+        stroke-width: 3;
+        fill: none;
+      }
+      .validation-loss-line {
+        stroke: #3498db;
+        stroke-width: 3;
+        fill: none;
+      }
+      .training-acc-line {
+        stroke: #27ae60;
+        stroke-width: 3;
+        fill: none;
+      }
+      .validation-acc-line {
+        stroke: #f39c12;
+        stroke-width: 3;
+        fill: none;
+      }
+      .legend {
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .training-loss-dot {
+        fill: #e74c3c;
+        stroke: white;
+        stroke-width: 2;
+      }
+      .validation-loss-dot {
+        fill: #3498db;
+        stroke: white;
+        stroke-width: 2;
+      }
+      .training-acc-dot {
+        fill: #27ae60;
+        stroke: white;
+        stroke-width: 2;
+      }
+      .validation-acc-dot {
+        fill: #f39c12;
+        stroke: white;
+        stroke-width: 2;
+      }
+      .tooltip {
+        position: absolute;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        border-radius: 6px;
+        pointer-events: none;
+        font-size: 13px;
+        z-index: 100;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        max-width: 200px;
+      }
+      .summary-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 20px;
+        padding: 25px;
+        background: #ecf0f1;
+        border-radius: 8px;
+      }
+      .stat-box {
+        text-align: center;
+        padding: 15px;
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        min-width: 120px;
+      }
+      .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: #7f8c8d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .loss-value {
+        color: #e74c3c;
+      }
+      .acc-value {
+        color: #27ae60;
+      }
+      .grid-line {
+        stroke: #e0e0e0;
+        stroke-width: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <div class="main-title">Model Training Metrics - All in One</div>
+
+      <div class="chart-container">
+        <svg width="100%" height="100%"></svg>
+      </div>
+
+      <div class="summary-stats">
+        <div class="stat-box">
+          <div class="stat-value loss-value" id="final-train-loss">-</div>
+          <div class="stat-label">Final Train Loss</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value loss-value" id="final-val-loss">-</div>
+          <div class="stat-label">Final Val Loss</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value acc-value" id="final-train-acc">-</div>
+          <div class="stat-label">Final Train Acc</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value acc-value" id="final-val-acc">-</div>
+          <div class="stat-label">Final Val Acc</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Combined data dari input user
+      const data = [
+        {
+          epoch: 1,
+          training_loss: 7.1367,
+          training_acc: 0.69,
+          validation_loss: 6.9186,
+          validation_acc: 1.75,
+        },
+        {
+          epoch: 2,
+          training_loss: 6.6197,
+          training_acc: 3.85,
+          validation_loss: 6.2001,
+          validation_acc: 10.7,
+        },
+        {
+          epoch: 3,
+          training_loss: 5.8123,
+          training_acc: 11.13,
+          validation_loss: 5.4175,
+          validation_acc: 21.79,
+        },
+        {
+          epoch: 4,
+          training_loss: 4.9656,
+          training_acc: 22.98,
+          validation_loss: 4.9436,
+          validation_acc: 28.99,
+        },
+        {
+          epoch: 5,
+          training_loss: 4.238,
+          training_acc: 34.3,
+          validation_loss: 4.1651,
+          validation_acc: 42.61,
+        },
+        {
+          epoch: 6,
+          training_loss: 3.619,
+          training_acc: 46.1,
+          validation_loss: 3.8966,
+          validation_acc: 46.5,
+        },
+        {
+          epoch: 7,
+          training_loss: 3.1714,
+          training_acc: 55.24,
+          validation_loss: 3.2756,
+          validation_acc: 58.56,
+        },
+        {
+          epoch: 8,
+          training_loss: 2.81,
+          training_acc: 62.96,
+          validation_loss: 3.0003,
+          validation_acc: 62.45,
+        },
+        {
+          epoch: 9,
+          training_loss: 2.5501,
+          training_acc: 69.5,
+          validation_loss: 3.1941,
+          validation_acc: 56.61,
+        },
+        {
+          epoch: 10,
+          training_loss: 2.3544,
+          training_acc: 74.2,
+          validation_loss: 2.9632,
+          validation_acc: 59.92,
+        },
+        {
+          epoch: 11,
+          training_loss: 2.2039,
+          training_acc: 77.24,
+          validation_loss: 2.6869,
+          validation_acc: 67.12,
+        },
+        {
+          epoch: 12,
+          training_loss: 2.0542,
+          training_acc: 81.34,
+          validation_loss: 2.772,
+          validation_acc: 66.34,
+        },
+        {
+          epoch: 13,
+          training_loss: 1.9692,
+          training_acc: 83.9,
+          validation_loss: 2.5872,
+          validation_acc: 68.87,
+        },
+        {
+          epoch: 14,
+          training_loss: 1.8936,
+          training_acc: 85.97,
+          validation_loss: 2.6123,
+          validation_acc: 68.48,
+        },
+        {
+          epoch: 15,
+          training_loss: 1.8067,
+          training_acc: 88.12,
+          validation_loss: 2.6518,
+          validation_acc: 66.73,
+        },
+        {
+          epoch: 16,
+          training_loss: 1.7806,
+          training_acc: 89.02,
+          validation_loss: 2.5259,
+          validation_acc: 70.23,
+        },
+        {
+          epoch: 17,
+          training_loss: 1.7276,
+          training_acc: 90.26,
+          validation_loss: 2.4191,
+          validation_acc: 71.21,
+        },
+        {
+          epoch: 18,
+          training_loss: 1.6998,
+          training_acc: 90.9,
+          validation_loss: 2.53,
+          validation_acc: 69.84,
+        },
+        {
+          epoch: 19,
+          training_loss: 1.6459,
+          training_acc: 92.29,
+          validation_loss: 2.4968,
+          validation_acc: 72.37,
+        },
+        {
+          epoch: 20,
+          training_loss: 1.6306,
+          training_acc: 93.29,
+          validation_loss: 2.3029,
+          validation_acc: 76.07,
+        },
+        {
+          epoch: 21,
+          training_loss: 1.599,
+          training_acc: 93.84,
+          validation_loss: 2.4209,
+          validation_acc: 71.21,
+        },
+        {
+          epoch: 22,
+          training_loss: 1.5788,
+          training_acc: 94.4,
+          validation_loss: 2.2647,
+          validation_acc: 77.43,
+        },
+        {
+          epoch: 23,
+          training_loss: 1.5757,
+          training_acc: 94.24,
+          validation_loss: 2.3204,
+          validation_acc: 74.51,
+        },
+        {
+          epoch: 24,
+          training_loss: 1.544,
+          training_acc: 94.97,
+          validation_loss: 2.4217,
+          validation_acc: 72.57,
+        },
+        {
+          epoch: 25,
+          training_loss: 1.5324,
+          training_acc: 95.46,
+          validation_loss: 2.6034,
+          validation_acc: 70.04,
+        },
+        {
+          epoch: 26,
+          training_loss: 1.4561,
+          training_acc: 97.52,
+          validation_loss: 2.2131,
+          validation_acc: 77.82,
+        },
+        {
+          epoch: 27,
+          training_loss: 1.4452,
+          training_acc: 97.78,
+          validation_loss: 2.1977,
+          validation_acc: 78.99,
+        },
+        {
+          epoch: 28,
+          training_loss: 1.4436,
+          training_acc: 97.89,
+          validation_loss: 2.3329,
+          validation_acc: 74.12,
+        },
+        {
+          epoch: 29,
+          training_loss: 1.4397,
+          training_acc: 97.76,
+          validation_loss: 2.326,
+          validation_acc: 73.54,
+        },
+        {
+          epoch: 30,
+          training_loss: 1.4307,
+          training_acc: 98.02,
+          validation_loss: 2.1424,
+          validation_acc: 80.54,
+        },
+        {
+          epoch: 31,
+          training_loss: 1.4314,
+          training_acc: 97.95,
+          validation_loss: 2.2483,
+          validation_acc: 76.65,
+        },
+        {
+          epoch: 32,
+          training_loss: 1.4198,
+          training_acc: 98.26,
+          validation_loss: 2.4926,
+          validation_acc: 70.23,
+        },
+        {
+          epoch: 33,
+          training_loss: 1.4194,
+          training_acc: 98.07,
+          validation_loss: 2.1588,
+          validation_acc: 78.6,
+        },
+        {
+          epoch: 34,
+          training_loss: 1.3921,
+          training_acc: 98.92,
+          validation_loss: 2.1541,
+          validation_acc: 78.6,
+        },
+        {
+          epoch: 35,
+          training_loss: 1.3893,
+          training_acc: 98.88,
+          validation_loss: 2.3284,
+          validation_acc: 74.9,
+        },
+        {
+          epoch: 36,
+          training_loss: 1.3823,
+          training_acc: 99.01,
+          validation_loss: 2.2361,
+          validation_acc: 77.82,
+        },
+        {
+          epoch: 37,
+          training_loss: 1.3745,
+          training_acc: 99.09,
+          validation_loss: 2.1069,
+          validation_acc: 80.93,
+        },
+        {
+          epoch: 38,
+          training_loss: 1.3734,
+          training_acc: 99.22,
+          validation_loss: 2.1083,
+          validation_acc: 80.54,
+        },
+        {
+          epoch: 39,
+          training_loss: 1.3643,
+          training_acc: 99.44,
+          validation_loss: 2.2965,
+          validation_acc: 77.63,
+        },
+        {
+          epoch: 40,
+          training_loss: 1.3653,
+          training_acc: 99.39,
+          validation_loss: 2.237,
+          validation_acc: 78.4,
+        },
+        {
+          epoch: 41,
+          training_loss: 1.3622,
+          training_acc: 99.42,
+          validation_loss: 2.1483,
+          validation_acc: 80.93,
+        },
+        {
+          epoch: 42,
+          training_loss: 1.3606,
+          training_acc: 99.47,
+          validation_loss: 2.1783,
+          validation_acc: 80.54,
+        },
+        {
+          epoch: 43,
+          training_loss: 1.3576,
+          training_acc: 99.51,
+          validation_loss: 2.1792,
+          validation_acc: 80.74,
+        },
+        {
+          epoch: 44,
+          training_loss: 1.3567,
+          training_acc: 99.56,
+          validation_loss: 2.1735,
+          validation_acc: 80.74,
+        },
+        {
+          epoch: 45,
+          training_loss: 1.3544,
+          training_acc: 99.51,
+          validation_loss: 2.1503,
+          validation_acc: 80.16,
+        },
+        {
+          epoch: 46,
+          training_loss: 1.3606,
+          training_acc: 99.32,
+          validation_loss: 2.0722,
+          validation_acc: 81.32,
+        },
+        {
+          epoch: 47,
+          training_loss: 1.3536,
+          training_acc: 99.51,
+          validation_loss: 2.1255,
+          validation_acc: 79.96,
+        },
+        {
+          epoch: 48,
+          training_loss: 1.3523,
+          training_acc: 99.59,
+          validation_loss: 2.1633,
+          validation_acc: 80.35,
+        },
+        {
+          epoch: 49,
+          training_loss: 1.3532,
+          training_acc: 99.51,
+          validation_loss: 2.0895,
+          validation_acc: 81.52,
+        },
+        {
+          epoch: 50,
+          training_loss: 1.3515,
+          training_acc: 99.48,
+          validation_loss: 2.092,
+          validation_acc: 80.93,
+        },
+        {
+          epoch: 51,
+          training_loss: 1.354,
+          training_acc: 99.46,
+          validation_loss: 2.1183,
+          validation_acc: 81.52,
+        },
+        {
+          epoch: 52,
+          training_loss: 1.3519,
+          training_acc: 99.48,
+          validation_loss: 2.0749,
+          validation_acc: 81.52,
+        },
+        {
+          epoch: 53,
+          training_loss: 1.3493,
+          training_acc: 99.68,
+          validation_loss: 2.0992,
+          validation_acc: 80.74,
+        },
+        {
+          epoch: 54,
+          training_loss: 1.3478,
+          training_acc: 99.64,
+          validation_loss: 2.0637,
+          validation_acc: 82.3,
+        },
+        {
+          epoch: 55,
+          training_loss: 1.3514,
+          training_acc: 99.56,
+          validation_loss: 2.0968,
+          validation_acc: 81.32,
+        },
+        {
+          epoch: 56,
+          training_loss: 1.3525,
+          training_acc: 99.42,
+          validation_loss: 2.0875,
+          validation_acc: 80.93,
+        },
+        {
+          epoch: 57,
+          training_loss: 1.3488,
+          training_acc: 99.62,
+          validation_loss: 2.0778,
+          validation_acc: 81.91,
+        },
+        {
+          epoch: 58,
+          training_loss: 1.3479,
+          training_acc: 99.68,
+          validation_loss: 2.0848,
+          validation_acc: 81.91,
+        },
+        {
+          epoch: 59,
+          training_loss: 1.3504,
+          training_acc: 99.49,
+          validation_loss: 2.0809,
+          validation_acc: 81.32,
+        },
+        {
+          epoch: 60,
+          training_loss: 1.347,
+          training_acc: 99.64,
+          validation_loss: 2.0915,
+          validation_acc: 81.13,
+        },
+        {
+          epoch: 61,
+          training_loss: 1.347,
+          training_acc: 99.64,
+          validation_loss: 2.0832,
+          validation_acc: 81.71,
+        },
+        {
+          epoch: 62,
+          training_loss: 1.3486,
+          training_acc: 99.63,
+          validation_loss: 2.0857,
+          validation_acc: 81.52,
+        },
+        {
+          epoch: 63,
+          training_loss: 1.3454,
+          training_acc: 99.7,
+          validation_loss: 2.124,
+          validation_acc: 80.74,
+        },
+        {
+          epoch: 64,
+          training_loss: 1.3484,
+          training_acc: 99.59,
+          validation_loss: 2.1301,
+          validation_acc: 80.54,
+        },
+      ];
+
+      // Create tooltip div
+      const tooltip = d3
+        .select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+
+      // Set up dimensions and margins
+      const margin = { top: 40, right: 200, bottom: 80, left: 80 };
+      const width = 1000 - margin.left - margin.right;
+      const height = 600 - margin.top - margin.bottom;
+
+      // Create the main SVG
+      const svg = d3
+        .select("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      // Create scales
+      const xScale = d3
+        .scaleLinear()
+        .domain([1, d3.max(data, (d) => d.epoch)])
+        .range([0, width]);
+
+      // Left Y scale for Loss (0-8)
+      const lossYScale = d3.scaleLinear().domain([0, 8]).range([height, 0]);
+
+      // Right Y scale for Accuracy (0-100%)
+      const accYScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+
+      // Add grid lines
+      svg
+        .append("g")
+        .attr("class", "grid")
+        .selectAll("line")
+        .data(lossYScale.ticks(8))
+        .enter()
+        .append("line")
+        .attr("class", "grid-line")
+        .attr("x1", 0)
+        .attr("x2", width)
+        .attr("y1", (d) => lossYScale(d))
+        .attr("y2", (d) => lossYScale(d));
+
+      // Create line generators
+      const trainingLossLine = d3
+        .line()
+        .x((d) => xScale(d.epoch))
+        .y((d) => lossYScale(d.training_loss))
+        .curve(d3.curveLinear);
+
+      const validationLossLine = d3
+        .line()
+        .x((d) => xScale(d.epoch))
+        .y((d) => lossYScale(d.validation_loss))
+        .curve(d3.curveLinear);
+
+      const trainingAccLine = d3
+        .line()
+        .x((d) => xScale(d.epoch))
+        .y((d) => accYScale(d.training_acc))
+        .curve(d3.curveLinear);
+
+      const validationAccLine = d3
+        .line()
+        .x((d) => xScale(d.epoch))
+        .y((d) => accYScale(d.validation_acc))
+        .curve(d3.curveLinear);
+
+      // Add all four lines
+      svg
+        .append("path")
+        .datum(data)
+        .attr("class", "training-loss-line")
+        .attr("d", trainingLossLine);
+
+      svg
+        .append("path")
+        .datum(data)
+        .attr("class", "validation-loss-line")
+        .attr("d", validationLossLine);
+
+      svg
+        .append("path")
+        .datum(data)
+        .attr("class", "training-acc-line")
+        .attr("d", trainingAccLine);
+
+      svg
+        .append("path")
+        .datum(data)
+        .attr("class", "validation-acc-line")
+        .attr("d", validationAccLine);
+
+      // Add data points for training loss
+      svg
+        .selectAll(".training-loss-dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "training-loss-dot")
+        .attr("cx", (d) => xScale(d.epoch))
+        .attr("cy", (d) => lossYScale(d.training_loss))
+        .attr("r", 4)
+        .on("mouseover", function (event, d) {
+          tooltip.transition().duration(200).style("opacity", 0.9);
+          tooltip
+            .html(
+              `<strong>Epoch ${
+                d.epoch
+              }</strong><br>Training Loss: ${d.training_loss.toFixed(4)}`
+            )
+            .style("left", event.pageX + 10 + "px")
+            .style("top", event.pageY - 28 + "px");
+        })
+        .on("mouseout", function () {
+          tooltip.transition().duration(500).style("opacity", 0);
+        });
+
+      // Add data points for validation loss
+      svg
+        .selectAll(".validation-loss-dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "validation-loss-dot")
+        .attr("cx", (d) => xScale(d.epoch))
+        .attr("cy", (d) => lossYScale(d.validation_loss))
+        .attr("r", 4)
+        .on("mouseover", function (event, d) {
+          tooltip.transition().duration(200).style("opacity", 0.9);
+          tooltip
+            .html(
+              `<strong>Epoch ${
+                d.epoch
+              }</strong><br>Validation Loss: ${d.validation_loss.toFixed(4)}`
+            )
+            .style("left", event.pageX + 10 + "px")
+            .style("top", event.pageY - 28 + "px");
+        })
+        .on("mouseout", function () {
+          tooltip.transition().duration(500).style("opacity", 0);
+        });
+
+      // Add data points for training accuracy
+      svg
+        .selectAll(".training-acc-dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "training-acc-dot")
+        .attr("cx", (d) => xScale(d.epoch))
+        .attr("cy", (d) => accYScale(d.training_acc))
+        .attr("r", 4)
+        .on("mouseover", function (event, d) {
+          tooltip.transition().duration(200).style("opacity", 0.9);
+          tooltip
+            .html(
+              `<strong>Epoch ${
+                d.epoch
+              }</strong><br>Training Accuracy: ${d.training_acc.toFixed(2)}%`
+            )
+            .style("left", event.pageX + 10 + "px")
+            .style("top", event.pageY - 28 + "px");
+        })
+        .on("mouseout", function () {
+          tooltip.transition().duration(500).style("opacity", 0);
+        });
+
+      // Add data points for validation accuracy
+      svg
+        .selectAll(".validation-acc-dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "validation-acc-dot")
+        .attr("cx", (d) => xScale(d.epoch))
+        .attr("cy", (d) => accYScale(d.validation_acc))
+        .attr("r", 4)
+        .on("mouseover", function (event, d) {
+          tooltip.transition().duration(200).style("opacity", 0.9);
+          tooltip
+            .html(
+              `<strong>Epoch ${
+                d.epoch
+              }</strong><br>Validation Accuracy: ${d.validation_acc.toFixed(
+                2
+              )}%`
+            )
+            .style("left", event.pageX + 10 + "px")
+            .style("top", event.pageY - 28 + "px");
+        })
+        .on("mouseout", function () {
+          tooltip.transition().duration(500).style("opacity", 0);
+        });
+
+      // Add X axis
+      svg
+        .append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale).ticks(10))
+        .append("text")
+        .attr("class", "axis-label")
+        .attr("x", width / 2)
+        .attr("y", 45)
+        .attr("fill", "#000")
+        .style("text-anchor", "middle")
+        .text("Epoch");
+
+      // Add left Y axis (Loss)
+      svg
+        .append("g")
+        .call(d3.axisLeft(lossYScale))
+        .append("text")
+        .attr("class", "axis-label")
+        .attr("transform", "rotate(-90)")
+        .attr("y", -50)
+        .attr("x", -height / 2)
+        .attr("fill", "#e74c3c")
+        .style("text-anchor", "middle")
+        .text("Loss");
+
+      // Add right Y axis (Accuracy)
+      svg
+        .append("g")
+        .attr("transform", `translate(${width}, 0)`)
+        .call(d3.axisRight(accYScale).tickFormat((d) => d + "%"))
+        .append("text")
+        .attr("class", "axis-label")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 50)
+        .attr("x", -height / 2)
+        .attr("fill", "#27ae60")
+        .style("text-anchor", "middle")
+        .text("Accuracy");
+
+      // Add comprehensive legend
+      const legend = svg
+        .append("g")
+        .attr("transform", `translate(${width + 50}, 50)`);
+
+      // Training Loss
+      legend
+        .append("line")
+        .attr("x1", 0)
+        .attr("x2", 20)
+        .attr("y1", 0)
+        .attr("y2", 0)
+        .attr("stroke", "#e74c3c")
+        .attr("stroke-width", 3);
+
+      legend
+        .append("circle")
+        .attr("cx", 10)
+        .attr("cy", 0)
+        .attr("r", 4)
+        .attr("fill", "#e74c3c")
+        .attr("stroke", "white")
+        .attr("stroke-width", 2);
+
+      legend
+        .append("text")
+        .attr("x", 30)
+        .attr("y", 5)
+        .text("Training Loss")
+        .attr("class", "legend")
+        .attr("fill", "#e74c3c");
+
+      // Validation Loss
+      legend
+        .append("line")
+        .attr("x1", 0)
+        .attr("x2", 20)
+        .attr("y1", 30)
+        .attr("y2", 30)
+        .attr("stroke", "#3498db")
+        .attr("stroke-width", 3);
+
+      legend
+        .append("circle")
+        .attr("cx", 10)
+        .attr("cy", 30)
+        .attr("r", 4)
+        .attr("fill", "#3498db")
+        .attr("stroke", "white")
+        .attr("stroke-width", 2);
+
+      legend
+        .append("text")
+        .attr("x", 30)
+        .attr("y", 35)
+        .text("Validation Loss")
+        .attr("class", "legend")
+        .attr("fill", "#3498db");
+
+      // Training Accuracy
+      legend
+        .append("line")
+        .attr("x1", 0)
+        .attr("x2", 20)
+        .attr("y1", 60)
+        .attr("y2", 60)
+        .attr("stroke", "#27ae60")
+        .attr("stroke-width", 3);
+
+      legend
+        .append("circle")
+        .attr("cx", 10)
+        .attr("cy", 60)
+        .attr("r", 4)
+        .attr("fill", "#27ae60")
+        .attr("stroke", "white")
+        .attr("stroke-width", 2);
+
+      legend
+        .append("text")
+        .attr("x", 30)
+        .attr("y", 65)
+        .text("Training Accuracy")
+        .attr("class", "legend")
+        .attr("fill", "#27ae60");
+
+      // Validation Accuracy
+      legend
+        .append("line")
+        .attr("x1", 0)
+        .attr("x2", 20)
+        .attr("y1", 90)
+        .attr("y2", 90)
+        .attr("stroke", "#f39c12")
+        .attr("stroke-width", 3);
+
+      legend
+        .append("circle")
+        .attr("cx", 10)
+        .attr("cy", 90)
+        .attr("r", 4)
+        .attr("fill", "#f39c12")
+        .attr("stroke", "white")
+        .attr("stroke-width", 2);
+
+      legend
+        .append("text")
+        .attr("x", 30)
+        .attr("y", 95)
+        .text("Validation Accuracy")
+        .attr("class", "legend")
+        .attr("fill", "#f39c12");
+
+      // Update summary statistics
+      const finalData = data[data.length - 1];
+      document.getElementById("final-train-loss").textContent =
+        finalData.training_loss.toFixed(4);
+      document.getElementById("final-val-loss").textContent =
+        finalData.validation_loss.toFixed(4);
+      document.getElementById("final-train-acc").textContent =
+        finalData.training_acc.toFixed(1) + "%";
+      document.getElementById("final-val-acc").textContent =
+        finalData.validation_acc.toFixed(1) + "%";
+    </script>
+  </body>
+</html>
